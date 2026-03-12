@@ -1,0 +1,5 @@
+cbbd:
+  name: collegebasketballdata
+  base_url: https://api.collegebasketballdata.com
+  auth_env: CBBD_API_KEY
+  rate_limit_per_minute: 60

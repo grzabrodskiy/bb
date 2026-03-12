@@ -1,0 +1,1005 @@
+# Changelog
+
+All notable project changes are documented here.
+
+## 2026-03-08
+
+### Changed (Latest)
+- Updated `scripts/train_nba_success_rapm_model.py` for pooled entrant-cohort scoring:
+  - trains one model and scores full exit-year ranges in a single run.
+  - latest run:
+    - `python3 scripts/train_nba_success_rapm_model.py --predict-start-year 2018 --predict-end-year 2023 --target-window-years 2 --feature-profile full --selection-objective rapm_mae`
+  - refreshed outputs:
+    - `data/processed/nba_success_rapm_targets_best2.csv`
+    - `data/processed/nba_success_rapm_model_metrics.csv`
+    - `data/processed/nba_success_rapm_predictions_exit_2018_2023.csv`
+    - `data/processed/nba_success_rapm_holdout_actual_vs_predicted_2017.csv`
+    - `data/processed/nba_success_rapm_model_report.txt`
+- Updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+  - popup season-tab labels now use team abbreviations (league type remains color-coded).
+  - removed `Birth Year (est)` from measurements and rendered age fields as integers.
+  - added Basketball-Reference fallback for NBA season-history payload when `player_stats_export.csv` is missing rows.
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2017.html`
+- Updated `scripts/generate_nba_position_factor_dashboard.py` measurement policy:
+  - combine is now primary and crafted is fallback via unified `measurement_*` fields.
+  - combine/crafted are no longer treated as separate features in factor modeling.
+  - regenerated:
+    - `data/processed/viz/nba_position_factor_dashboard.html`
+- Added diagnostics report:
+  - `data/processed/nba_success_common_sense_checks_2018_2023.txt`
+  - summarizes data coverage limits, wingspan sign-stability checks, and source-level gap findings.
+- Updated core app shell (`data/processed/viz/index.html`) to production-only layout:
+  - removed all experimental dashboard links and RAPM selector controls.
+  - index now shows only 3 dashboards/models:
+    1. NBA Performance Prediction
+    2. Success Drivers by Position
+    3. Pick Number Prediction
+  - added NBA Success holdout-year selector on index (currently available: `2018`, `2019`, `2022`).
+- Updated NBA Success popup behavior in `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+  - removed `Bio` tab.
+  - moved `Age` into `Measurements`.
+  - kept team/position inside each season tab.
+  - expanded popup position text from abbreviations to full names (for example `PG` -> `Point Guard`).
+  - added in-dashboard holdout-year selector (switches between generated yearly pages).
+  - regenerated dashboards:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2018.html`
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2019.html`
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+- Updated position-factor dashboard (`scripts/generate_nba_position_factor_dashboard.py`):
+  - retained explicit `Positive Factors` and `Negative Factors`.
+  - added dedicated `Measurement Factors` and `Improvement Factors` sections.
+  - clarified pooled multi-year interpretation in dashboard text.
+  - regenerated:
+    - `data/processed/viz/nba_position_factor_dashboard.html`
+
+- Fixed and completed dynamic modal tab logic in `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+  - replaced stale fixed-tab JS (`College/NBA/Bio/Measurements`) with dynamic season tabs.
+  - modal now renders one tab per season, color-coded by source:
+    - `College YYYY/YY`
+    - `NBA YYYY/YY`
+  - retained separate `Bio` and `Measurements` tabs.
+  - removed broken references to deleted tab elements that were causing unstable popup behavior.
+  - popup height is now locked to the largest tab so size stays stable when switching tabs.
+- Added season-history payload support to dashboard records:
+  - `college_seasons`, `college_team_history`, `college_position_history`
+  - `nba_seasons`, `nba_team_history`, `nba_position_history`
+- Expanded measurement fallback/imputation coverage in dashboard generation:
+  - lowered minimum fit-row threshold for linear fallback imputation in popup display fields.
+  - regenerated `2022` NBA Success dashboard now fills more missing measurement values (including Paolo Banchero standing reach estimate when combine row is missing).
+- Added new position-level explainability dashboard:
+  - script: `scripts/generate_nba_position_factor_dashboard.py`
+  - output: `data/processed/viz/nba_position_factor_dashboard.html`
+  - shows top positive/negative NBA-success drivers by `Guard`, `Forward`, `Center` using position-specific ridge fits on existing multi-year model dataset.
+- Updated core viz index:
+  - `data/processed/viz/index.html`
+  - refreshed cache-bust for NBA Success (`rev=20260308a`)
+  - added new core link: `NBA Success Position Factors`.
+- Regenerated:
+  - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - `data/processed/viz/nba_position_factor_dashboard.html`
+
+## 2026-03-07
+
+### Changed (Latest)
+- Addressed `Pred RAPM` display compression in `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+  - added empirical quantile calibration for predicted RAPM values (including best-2 branch) so displayed predictions align to observed holdout RAPM distribution.
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+- Added current feature inventory artifact:
+  - `data/processed/nba_new_joiner_features_current.txt`
+  - includes static numeric/categorical features and dynamic feature-group patterns used by current NBA Success pipeline.
+- Updated index cache-bust:
+  - `data/processed/viz/index.html` (`rev=20260307n`)
+- Updated 2022 NBA Success cohort logic in `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+  - holdout now includes 2022 class entrants as requested:
+    - drafted in 2022 (including players whose first NBA playing season was later due to injury/delay)
+    - undrafted players who entered in the 2022/23 window
+  - keeps forward-leak rows (for example later classes like Brandin Podziemski) excluded.
+- Updated popup Bio display:
+  - start seasons now shown as season ranges (for example `2022/23`) for college/NBA start context.
+- Regenerated:
+  - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+- Updated index cache-bust:
+  - `data/processed/viz/index.html` (`rev=20260307m`)
+- Fixed holdout cohort leakage in `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+  - `2022` dashboard now drops forward-leak rows from players not in the 2022 entry cohort (for example prior-college rows from later draft classes).
+  - added guard for undrafted rows to keep only immediate NBA-entry window (`holdout_year` to `holdout_year + 1`) to reduce same-name false matches.
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - updated index cache-bust:
+    - `data/processed/viz/index.html` (`rev=20260307l`)
+- Updated `scripts/generate_nba_impact_dashboard1_top60_html.py` sort order:
+  - dashboard table now sorts by `Actual Rank` first (then `Draft Pick`, then name), not by pick.
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard1_real_top60_2022.html`
+- Updated core NBA Success popup UX in `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+  - replaced popup tabs with:
+    - `College Stats`
+    - `NBA Stats`
+    - `Bio`
+  - moved `Age` to `Bio`
+  - added profile fields:
+    - `College Start Year`
+    - `College Years Played`
+    - `NBA Start Year`
+    - `NBA Years Played`
+    - `Draft Pick`
+  - team context shown in both:
+    - college tab (`College Team`)
+    - NBA tab (`NBA Team`)
+- Added click-to-explain abbreviation popups in driver text:
+  - replaced hover-only title behavior with click popover for abbreviations (`MIN`, `TS`, `3PA/FGA`, etc.)
+- Updated miss-explanation display:
+  - miss explanation cell is now shown only for actual misses (blank for hit/close rows)
+- Expanded measurement completion in dashboard generation:
+  - merged CraftedNBA measurements from:
+    - `data/raw/external/craftednba/player_traits_length.csv`
+  - added model-based fallback estimates for missing physical fields (for display continuity):
+    - `standing reach`
+    - `hand length`
+    - `hand width`
+    - `body fat %`
+  - holdout (`2022`) popup coverage is now near-complete for core measurements
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - updated index cache-bust:
+    - `data/processed/viz/index.html` (`rev=20260307i`)
+- Switched core `NBA Success Dashboard` holdout table back to rank-focused evaluation:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - table now shows:
+    - `Actual Rank`
+    - `Pred Rank`
+    - `Abs Rank Err`
+  - rank success bands now drive filtering and row colors:
+    - hit: `<=5`
+    - close: `6-10`
+    - miss: `>10`
+  - summary cards now show rank metrics (`Rank MAE`, rank hit rates at `<=5` and `<=10`).
+- Simplified measurement popup display:
+  - removed source rows from popup tabs (`Height source`, `Weight source`, etc.)
+  - popup now shows measurement values only.
+- Added official NBA combine anthro downloader:
+  - new script: `scripts/download_nba_combine_anthro.py`
+  - source endpoint: `https://stats.nba.com/stats/draftcombineplayeranthro`
+  - supports draft-year range download into:
+    - `data/raw/external/nba_stats_draft/antro/antro/Draft_antro_YYYY.csv`
+  - refreshed years `2015..2023` (includes `WINGSPAN` and `STANDING_REACH` fields).
+  - fixed draft-year -> `SeasonYear` mapping:
+    - correct mapping is `draft Y -> SeasonYear "Y-(Y+1)"` (for example draft `2022` -> `2022-23`)
+- Fixed combine backfill path in dashboard generator and increased popup measurement coverage:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - combine merge now applies correctly to both holdout and prediction frames
+  - core 2022 holdout popup measurement coverage is now:
+    - height/weight: `42/43`
+    - wingspan/standing reach: `30/43`
+- Fixed `NBA Success Dashboard` modal measurements showing all `NA` for many players:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - added measurement fallback/coalescing for popup fields:
+    - `height`: `combine_height_wo_shoes_in` -> `height_in` -> `ext_height_in_modeldb`
+    - `weight`: `combine_weight_lb` -> `weight_lb` -> `ext_weight_lb_modeldb`
+    - `age`: `age` -> `ext_draft_day_age`
+  - popup now also shows per-field source labels (for example `NBA combine`, `bio`, `external model db`)
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - index cache-bust updated:
+    - `data/processed/viz/index.html` (`rev=20260307c`)
+
+## 2026-03-02
+
+### Changed (Latest)
+- Added clickable player detail workflow to core NBA Success dashboard:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - player names in both tables are now hyperlinks
+  - selecting a player opens a modal popup with separate tabs:
+    - `Stats`
+    - `Measurements`
+  - popup supports close button, click-outside-to-close, and `Esc` key close
+  - detail panel fields include key production/efficiency and combine measurements (age, minutes, per-40 stats, usage/TS/3P/3PA, stocks, AST/TOV, net rating, height/weight/wingspan/standing reach)
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - index cache-bust updated:
+    - `data/processed/viz/index.html` (`rev=20260303g`)
+- Aligned the true RAPM-peak trainer to the stated objective (college stats + measurements -> best-2-year RAPM peak):
+  - updated `scripts/train_nba_success_rapm_model.py`
+  - added multi-year profile features:
+    - `career_avg_*`, `trend_*`, `peak_gap_*`
+    - robust trimmed profile `career_trim1_avg_*` (drop one worst season when player has at least 3 years)
+  - removed direct tenure/class-year penalty fields from model input selection (kept performance/efficiency/measurement signals)
+  - updated feature weighting to emphasize `best_*`, `career_*`, `trend_*`, `peak_gap_*`, and measurements
+  - reran:
+    - `python3 scripts/train_nba_success_rapm_model.py --test-draft-year 2017 --predict-draft-year 2025 --target-window-years 2 --feature-profile full --selection-objective rapm_mae`
+  - selected model: `gbr_03_d2`
+  - holdout (`2017`) metrics:
+    - `RAPM_MAE=0.8334`, `RAPM_RMSE=1.1955`
+    - `Hit<=0.75=26/43`, `Hit<=1.0=30/43`
+  - regenerated outputs:
+    - `data/processed/nba_success_rapm_model_metrics.csv`
+    - `data/processed/nba_success_rapm_predictions_draft_2025.csv`
+    - `data/processed/nba_success_rapm_holdout_actual_vs_predicted_2017.csv`
+    - `data/processed/nba_success_rapm_model_report.txt`
+    - `data/processed/viz/nba_success_dashboard_real_vs_predicted_2017_rapm.html`
+- Added robust all-years profile variant that drops the worst college season when enough history exists:
+  - updated `scripts/train_nba_new_joiner_impact_model.py`
+  - for cumulative profile features, if a player has `>=3` college seasons, one lowest-quality season is excluded from trimmed averages:
+    - new feature family: `career_trim1_avg_*`
+    - quality score uses relative season strength across shooting, playmaking, defense/rebounding, and turnover control
+  - retrained 2022 holdout with same objective (`rapm_hit100`):
+    - selected model: `rf_d10_l4`
+    - updated holdout snapshot:
+      - `RAPM_MAE=1.196`, `RAPM_RMSE=1.592`
+      - `RAPM hits (|err|<=1.0)=19/34` (`55.9%`)
+      - `Label exact=15/34` (`44.1%`)
+      - `Label within1=27/34` (`79.4%`)
+  - regenerated:
+    - `data/processed/nba_new_joiner_impact_model_metrics.csv`
+    - `data/processed/nba_new_joiner_impact_predictions_draft_2025.csv`
+    - `data/processed/nba_new_joiner_impact_holdout_actual_vs_predicted_2022.csv`
+    - `data/processed/nba_new_joiner_impact_model_report.txt`
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - index cache-bust updated:
+    - `data/processed/viz/index.html` (`rev=20260303e`)
+- Updated NBA Success training to be tenure-neutral for 1-year vs 3-4 year college paths:
+  - updated `scripts/train_nba_new_joiner_impact_model.py`
+  - removed direct tenure/class-year penalty features from model inputs:
+    - `years_in_college`, `years_since_first_seen`, `years_since_first_seen_sq`, `is_first_year`, `is_upperclass`, `first_seen_season`
+  - added all-years profile features (up to draft year):
+    - `career_avg_*` (minutes-weighted cumulative averages)
+    - `trend_*` (draft-year minus first observed year)
+    - `peak_gap_*` (`best_*` minus `career_avg_*`)
+    - `career_minutes_total`, `n_college_seasons_seen`
+  - feature weighting updated to emphasize `best_*`, `career_avg_*`, `trend_*`, `peak_gap_*` without tenure multipliers
+- Reran core 2022 training + dashboard refresh with tenure-neutral features:
+  - command:
+    - `python3 scripts/train_nba_new_joiner_impact_model.py --test-draft-year 2022 --predict-draft-year 2025 --target-window-years 2 --target-season-mode best --min-target-metrics 2 --selection-objective rapm_hit100 --feature-profile full`
+  - selected model: `blend_ridge_rf_extra`
+  - holdout (`2022`) snapshot:
+    - RAPM MAE: `1.153`
+    - RAPM RMSE: `1.524`
+    - RAPM hits (`|err| <= 1.0`): `20/34` (`58.8%`)
+    - label hits (exact): `12/34` (`35.3%`)
+    - label hits (within 1): `28/34` (`82.4%`)
+  - regenerated:
+    - `data/processed/nba_new_joiner_impact_model_metrics.csv`
+    - `data/processed/nba_new_joiner_impact_predictions_draft_2025.csv`
+    - `data/processed/nba_new_joiner_impact_holdout_actual_vs_predicted_2022.csv`
+    - `data/processed/nba_new_joiner_impact_model_report.txt`
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+- Switched core 2022 NBA Success success definition to label-based exact match:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - RAPM label bands:
+    - `fantastic >= 3.0`
+    - `excellent [0.75, 3.0)`
+    - `good [-0.25, 0.75)`
+    - `average [-1.0, -0.25)`
+    - `bad < -1.0`
+  - dashboard table now includes:
+    - `Actual Label`, `Pred Label`, `Label Outcome`
+  - removed rank columns and rank summary cards from the visible dashboard UI to keep the page RAPM/label-focused
+  - dashboard success rule now uses exact label match (row outcome `Hit` only when labels are equal)
+  - summary cards now include:
+    - `Label Hits (Exact)` and `Label Hit Rate (Exact)`
+    - `Label Hits (Within 1)` and `Label Hit Rate (Within 1)` (secondary tolerance metric)
+  - miss explanations were upgraded from driver-repeats to conflict-style diagnostics:
+    - `Overprojected on X; weak Y limited translation`
+    - `Underprojected due to weak Y; strong X translated better`
+    - boundary-aware message for near-cutoff misses
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - index cache-bust updated:
+    - `data/processed/viz/index.html` (`rev=20260303d`)
+- Upgraded the core 2022 NBA Success training pipeline for stronger generalization and NBA relevance:
+  - updated `scripts/train_nba_new_joiner_impact_model.py`:
+    - added cumulative multi-year `best_*` college features (all college years considered, not only draft-year snapshot)
+    - added explicit feature weighting for NBA-transferable signals (3PA rate, 3P%, TS, AST/TOV, stocks, age/experience, combine size/length)
+    - expanded model candidates (`rf_d18_l1`, `extra_d18_l1`) and added broader selection objectives
+    - added RAPM-aligned holdout selection metrics from `TimedecayRAPM`:
+      - `rapm_mae`, `rapm_rmse`, `rapm_hit100`
+    - added rank hit metrics (`within1`, `within2`, `within5`, `within10`) to model comparison output
+- Reran 2022 holdout training with RAPM-aligned objective:
+  - command:
+    - `python3 scripts/train_nba_new_joiner_impact_model.py --test-draft-year 2022 --predict-draft-year 2025 --target-window-years 2 --target-season-mode best --min-target-metrics 2 --selection-objective rapm_hit100 --feature-profile full`
+  - selected model: `rf_d14_l2`
+  - holdout snapshot (`2022`):
+    - RAPM coverage: `34/43`
+    - RAPM MAE: `1.160`
+    - RAPM RMSE: `1.609`
+    - RAPM hits (`|err| <= 1.0`): `21/34` (`61.8%`)
+    - rank quality: `MAE_rank=11.30`, `within5=17/43`, `within10=21/43`
+- Updated core 2022 NBA Success dashboard success logic and filters:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`:
+    - defaults now target core 2022 files (`nba_new_joiner_impact_*` inputs, `nba_impact_dashboard_real_vs_predicted_2022.html` output)
+    - restored rank-first success rule with wider tolerance: hit if `|rank error| <= 1`
+    - controls now filter by rank-error bands (`<=1`, `2-5`, `>5`)
+    - summary cards now include rank-hit metrics (`<=1`, `<=5`)
+    - kept `Actual/Pred Rank` and `Actual/Pred RAPM` columns together for side-by-side debugging
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+    - `data/processed/nba_new_joiner_impact_holdout_actual_vs_predicted_2022.csv`
+    - `data/processed/nba_new_joiner_impact_model_metrics.csv`
+    - `data/processed/nba_new_joiner_impact_predictions_draft_2025.csv`
+    - `data/processed/nba_new_joiner_impact_model_report.txt`
+- Updated dashboard cache-bust in index:
+  - `data/processed/viz/index.html`
+  - core NBA Success link now uses `rev=20260302r`
+
+### Added
+- Added free historical RAPM downloader:
+  - script: `scripts/download_rapm_history.py`
+  - source: `https://basketball-analytics.gitlab.io/rapm-data/`
+  - downloaded seasons: `1996-97`..`2018-19` (regular + playoffs)
+  - outputs:
+    - `data/raw/external/rapm_history/rapm_history_all.csv`
+    - `data/raw/external/rapm_history/rapm_history_regular.csv`
+    - `data/raw/external/rapm_history/rapm_history_playoffs.csv`
+- Added RAPM-peak NBA success model pipeline aligned to college-stats-plus-bio objective:
+  - script: `scripts/train_nba_success_rapm_model.py`
+  - target: mean of top-2 post-draft regular-season RAPM values per player
+  - merges combine anthropometrics (including wingspan and standing reach) from:
+    - `data/raw/external/nba_stats_draft/antro/antro/*.csv`
+  - outputs:
+    - `data/processed/nba_success_rapm_targets_best2.csv`
+    - `data/processed/nba_success_rapm_model_metrics.csv`
+    - `data/processed/nba_success_rapm_predictions_draft_2025.csv`
+    - `data/processed/nba_success_rapm_holdout_actual_vs_predicted_2017.csv`
+    - `data/processed/nba_success_rapm_model_report.txt`
+- Added RAPM-peak success dashboards:
+  - `data/processed/viz/nba_success_dashboard_real_vs_predicted_2017_rapm.html`
+  - `data/processed/viz/nba_success_dashboard1_top60_2017_rapm.html`
+
+### Changed (Recent)
+- Switched main `NBA Success Dashboard` link back to `2022` holdout page per request:
+  - updated `data/processed/viz/index.html` to point core card to:
+    - `nba_impact_dashboard_real_vs_predicted_2022.html?rev=20260302q`
+  - regenerated 2022 page with latest table layout + `NBA Team` column:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+- Added modern RAPM downloader prototype from thebasketballdatabase:
+  - new script: `scripts/download_tbd_rapm_history.py`
+  - validated season-level RAPM table availability on player pages (`END_SEASON`, `ONE_YR_RAPM`)
+  - produced targeted file for draft-model scope:
+    - `data/raw/external/rapm_history/rapm_history_regular_tbd_2022scope.csv`
+    - coverage observed: seasons up to `2024` for matched players
+- Added `NBA Team` column to NBA Success dashboard tables:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - merged draft-team info from `data/raw/nba/draft/nba_draft_history_2015_2025.csv` (`draft_year + pick_overall -> team_abbr`)
+  - added `NBA Team` to:
+    - holdout table
+    - predicted class table
+  - regenerated:
+    - `data/processed/viz/nba_success_dashboard_real_vs_predicted_2017_rapm.html`
+- Improved NBA Success RAPM-peak model accuracy with direct RAPM training and expanded model search:
+  - updated `scripts/train_nba_success_rapm_model.py`:
+    - target is now modeled directly in RAPM units (`rapm_best2_mean`) instead of z-space
+    - added feature profiles: `full`, `no_ext`, `core`
+    - added broader model sweep: ridge grid (`a20/a80/a200/a400`), tuned RF, ExtraTrees, HistGBRT variants, GBRT
+    - added selection objective `hit075` (maximize share within `|err| <= 0.75`)
+    - expanded holdout metrics: `hit075`, `hit100`, and rates
+  - reran:
+    - `python3 scripts/train_nba_success_rapm_model.py --test-draft-year 2017 --predict-draft-year 2025 --target-window-years 2 --feature-profile full --selection-objective hit075 --disable-linear-calibration`
+  - new selected model: `ridge_a200`
+  - holdout (`2017`) improved from prior run:
+    - `RAPM_MAE`: `0.781` (from `0.973`)
+    - `RAPM_RMSE`: `1.087` (from `1.247`)
+    - `|err| <= 0.75`: `28/43 = 65.1%` (from `23/43 = 53.5%`)
+    - `|err| <= 1.0`: `30/43 = 69.8%` (from `28/43 = 65.1%`)
+  - regenerated:
+    - `data/processed/nba_success_rapm_model_metrics.csv`
+    - `data/processed/nba_success_rapm_predictions_draft_2025.csv`
+    - `data/processed/nba_success_rapm_holdout_actual_vs_predicted_2017.csv`
+    - `data/processed/nba_success_rapm_model_report.txt`
+    - `data/processed/viz/nba_success_dashboard_real_vs_predicted_2017_rapm.html`
+  - updated index cache-bust:
+    - `data/processed/viz/index.html` (`rev=20260302p`)
+- Simplified NBA Success main table by removing latent-model score columns:
+  - removed `Actual Z` and `Pred Z` from
+    - `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+    - `data/processed/viz/nba_success_dashboard_real_vs_predicted_2017_rapm.html` (regenerated)
+- Switched NBA Success primary flow to true **best-2-year RAPM** target (not current Timedecay RAPM snapshot):
+  - retrained: `python3 scripts/train_nba_success_rapm_model.py --test-draft-year 2017 --predict-draft-year 2025 --target-window-years 2`
+  - selected model: `ridge`
+  - holdout (`2017`) RAPM metrics:
+    - `RAPM_MAE=0.9731`, `RAPM_RMSE=1.2470`
+    - hit rate `|err| <= 0.75`: `23/43 = 53.5%`
+    - hit rate `|err| <= 1.0`: `28/43 = 65.1%`
+  - refreshed outputs:
+    - `data/processed/nba_success_rapm_model_metrics.csv`
+    - `data/processed/nba_success_rapm_predictions_draft_2025.csv`
+    - `data/processed/nba_success_rapm_holdout_actual_vs_predicted_2017.csv`
+    - `data/processed/nba_success_rapm_model_report.txt`
+- Updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py` to support best-2-year RAPM mode directly:
+  - defaults now point to `nba_success_rapm_*` files
+  - when `actual_rapm_best2_mean` and `pred_rapm_best2_mean` exist, dashboard uses them directly as actual/pred RAPM
+  - retains Timedecay merge+calibration only as fallback
+  - added explicit `<=0.75` hit metrics in summary
+  - regenerated:
+    - `data/processed/viz/nba_success_dashboard_real_vs_predicted_2017_rapm.html`
+- Updated visualization home page so core `NBA Success Dashboard` opens the best-2-year RAPM view:
+  - `data/processed/viz/index.html` now links to `nba_success_dashboard_real_vs_predicted_2017_rapm.html?rev=20260302o`
+- Made NBA Success (core 2022 dashboard) RAPM-only in UI and evaluation:
+  - updated `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - removed rank columns/labels/filters/metrics from the rendered page
+  - hit/miss now uses RAPM error only (`|actual_rapm - pred_rapm|`, hit at `<= 1.0`)
+  - miss explanations are now RAPM-driven only (no rank fallback wording)
+  - removed RAPM-rank dependency from merge logic (uses RAPM value only)
+  - refreshed output:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+  - updated index cache-bust + subtitle to reflect RAPM-first behavior:
+    - `data/processed/viz/index.html` (`rev=20260302n`)
+- Improved 2022 NBA Success proxy model training quality (main dashboard path):
+  - updated `scripts/train_nba_new_joiner_impact_model.py`:
+    - added drafted-row dedupe guard (`season + name + pick`, keep highest-minute row) to prevent same-name duplicate leakage.
+    - added feature profiles; `core` profile now drops noisy external model-db feature blocks by default while keeping basketball + bio + combine features.
+    - retained explicit `years_in_college` and combine measurement features.
+    - expanded model candidates beyond baseline:
+      - ridge grid, tuned random forest, extra trees, hist gradient boosting, gradient boosting, plus a blend candidate.
+    - model selection now supports rank-focused objective (`--selection-objective rank_mae`).
+  - reran:
+    - `python3 scripts/train_nba_new_joiner_impact_model.py --test-draft-year 2022 --predict-draft-year 2025 --target-window-years 2 --target-season-mode best --min-target-metrics 2 --selection-objective rank_mae --feature-profile core`
+  - updated holdout quality (`2022`):
+    - selected model: `ridge_a60`
+    - `MAE_rank=10.65` (improved from `12.07`)
+    - `within10=26/43` (improved from `18/44`)
+    - `within5=14/43` (was `13/44`)
+  - regenerated outputs:
+    - `data/processed/nba_impact_targets_window2.csv`
+    - `data/processed/nba_new_joiner_impact_model_metrics.csv`
+    - `data/processed/nba_new_joiner_impact_predictions_draft_2025.csv`
+    - `data/processed/nba_new_joiner_impact_holdout_actual_vs_predicted_2022.csv`
+    - `data/processed/nba_new_joiner_impact_model_report.txt`
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+    - `data/processed/viz/nba_impact_dashboard1_real_top60_2022.html`
+- Removed graph panels from NBA Success dashboards and kept table-first layout:
+  - `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - `scripts/generate_nba_impact_dashboard1_top60_html.py`
+- Updated 2022 dashboard score columns so proxy runs do not show `n/a` for RAPM columns:
+  - fallback now uses proxy impact scores when true RAPM peak columns are unavailable.
+- Reran true RAPM-peak NBA success model and refreshed RAPM dashboards:
+  - command:
+    - `python3 scripts/train_nba_success_rapm_model.py --test-draft-year 2017 --predict-draft-year 2025 --target-window-years 2`
+  - holdout (`2017`) latest metrics:
+    - `random_forest`: `RMSE=0.9956`, `MAE=0.7176`, `Spearman=0.1187` (selected)
+    - rank quality: `MAE_rank=13.21`, `within5=13/43`, `within10=19/43`
+  - refreshed outputs:
+    - `data/processed/nba_success_rapm_targets_best2.csv`
+    - `data/processed/nba_success_rapm_model_metrics.csv`
+    - `data/processed/nba_success_rapm_predictions_draft_2025.csv`
+    - `data/processed/nba_success_rapm_holdout_actual_vs_predicted_2017.csv`
+    - `data/processed/nba_success_rapm_model_report.txt`
+    - `data/processed/viz/nba_success_dashboard_real_vs_predicted_2017_rapm.html`
+    - `data/processed/viz/nba_success_dashboard1_top60_2017_rapm.html`
+- Re-centered NBA Success primary flow on `2022` holdout proxy dashboards and kept RAPM-peak (`2017`) as experimental:
+  - updated links in `data/processed/viz/index.html`:
+    - core: `nba_impact_dashboard_real_vs_predicted_2022.html`
+    - experimental diagnostics: `nba_impact_dashboard1_real_top60_2022.html`
+    - experimental RAPM-peak page retained: `nba_success_dashboard_real_vs_predicted_2017_rapm.html`
+- Enhanced top-60 NBA Success diagnostics with explicit driver and miss attribution:
+  - updated script: `scripts/generate_nba_impact_dashboard1_top60_html.py`
+  - dashboard now includes:
+    - `Drivers (+)` and `Drivers (-)` columns (cohort-relative college stat signals)
+    - `Miss Explanation` text aligned to underrate/overrate direction
+    - explicit miss definition in-page (`abs rank error > 10`)
+    - `Pred Rank (All Players)` column so true top-60 picks can show as outside top-60 model board
+- Updated proxy model holdout export to include all-player rank scope:
+  - updated script: `scripts/train_nba_new_joiner_impact_model.py`
+  - holdout output now contains:
+    - `pred_rank_drafted` (evaluation scope)
+    - `pred_rank_all_players` (full season pool scope)
+    - `pred_impact_z_all_players`
+- Reran 2022 proxy success model and regenerated dashboards:
+  - command:
+    - `python3 scripts/train_nba_new_joiner_impact_model.py --test-draft-year 2022 --predict-draft-year 2025 --target-window-years 2 --target-season-mode best --min-target-metrics 2`
+  - regenerated:
+    - `data/processed/nba_new_joiner_impact_holdout_actual_vs_predicted_2022.csv`
+    - `data/processed/nba_new_joiner_impact_predictions_draft_2025.csv`
+    - `data/processed/nba_new_joiner_impact_model_metrics.csv`
+    - `data/processed/nba_new_joiner_impact_model_report.txt`
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+    - `data/processed/viz/nba_impact_dashboard1_real_top60_2022.html`
+
+- Updated dashboard index structure and links:
+  - `data/processed/viz/index.html`
+  - core section now keeps only:
+    - `Draft Pick Dashboard`
+    - `NBA Success Dashboard`
+  - all remaining screens are under `Experimental`
+  - `NBA Success Dashboard` now points to RAPM-peak model output (`2017` holdout page)
+- Retrained RAPM-peak success model (`test-draft-year=2017`) and regenerated dashboard outputs.
+- Added drafted-row dedupe guard in `scripts/train_nba_success_rapm_model.py` to avoid same-name cross-college label collisions (keeps highest-minute row per `season + name + pick`).
+
+### Added (Earlier Updates)
+
+- Added new-joiner NBA impact modeling pipeline from college data:
+  - script: `scripts/train_nba_new_joiner_impact_model.py`
+  - uses multi-season college features (not restricted to single-season stats)
+  - builds RAPM-family target proxy from free NBA impact datasets:
+    - `LEBRON`, `DARKO dpm`, `MAMBA`, `RAPTOR`
+  - target construction:
+    - average over best 2 NBA seasons after draft
+    - z-score per metric, then mean composite (`nba_impact_target_z`)
+    - training rows require at least 2 available metrics
+- Generated new outputs:
+  - `data/processed/nba_impact_targets_window2.csv`
+  - `data/processed/nba_new_joiner_impact_model_metrics.csv`
+  - `data/processed/nba_new_joiner_impact_predictions_draft_2025.csv`
+  - `data/processed/nba_new_joiner_impact_model_report.txt`
+- Added free Basketball-Reference advanced-player downloader:
+  - script: `scripts/download_bref_nba_advanced.py`
+  - output: `data/raw/nba/bref/player_advanced_2010_2026.csv` (`11,140` rows; seasons `2010`-`2026`)
+- Added new impact diagnostics dashboard generation:
+  - script: `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - outputs:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+    - `data/processed/nba_new_joiner_impact_holdout_actual_vs_predicted_2022.csv`
+  - added dashboard card to:
+    - `data/processed/viz/index.html`
+- Added Dashboard 1-style NBA impact diagnostics page focused on top-60 real picks:
+  - script: `scripts/generate_nba_impact_dashboard1_top60_html.py`
+  - output: `data/processed/viz/nba_impact_dashboard1_real_top60_2022.html`
+  - added dashboard card to `data/processed/viz/index.html`
+  - dashboard now includes explicit rank labels and NBA RAPM enrichment columns (`NBA RAPM`, `RAPM Rank`) from `data/raw/external/nbarapm/TimedecayRAPM.csv` when name match is available.
+  - miss explanations now use only player performance phrasing (minutes, efficiency, usage, turnovers, box-score activity), removing model-centric wording.
+  - miss explanation column now outputs short, stat-specific numeric reasons (`Miss Detail`) per miss (for example lower TS, higher turnovers, lighter minute sample).
+  - dashboard now includes an in-page `Column Definitions` section describing rank construction and target-score computation.
+
+### Changed
+- Expanded draft miss root-cause attribution in `scripts/compute_draft_miss_root_causes.py`:
+  - added explicit 3-point features (`three_point_attempt_rate`, `three_point_pct`) to miss-driver tagging
+  - added fallback explanation mapping for season-percentile variants of 3PA rate / 3P%
+  - added combined efficiency+impact miss rule for clearer miss detail on profiles like `Egor Demin` (TS/net/TO with 3PA context)
+  - fixed 3P% unit handling (`0-1` vs `0-100`) in miss tags to avoid overstated percentages
+  - reran output: `data/processed/nba_draft_holdout_2025_miss_root_causes.csv`
+- Regenerated draft dashboard1 with updated miss tags:
+  - `data/processed/viz/nba_draft_dashboard1_real_vs_predicted_2025.html`
+- Reran NBA new-joiner impact model explicitly with best-two-season target mode and regenerated impact dashboards:
+  - command mode: `--target-season-mode best --target-window-years 2`
+  - latest holdout (`2022`) metrics:
+    - `random_forest`: `RMSE=0.7307`, `MAE=0.5761`, `Spearman=0.3040` (best RMSE)
+    - `ridge`: `RMSE=0.7361`, `MAE=0.5422`, `Spearman=0.4085`
+    - `hist_gbrt`: `RMSE=0.7494`, `MAE=0.5965`, `Spearman=0.2650`
+  - refreshed outputs:
+    - `data/processed/nba_impact_targets_window2.csv`
+    - `data/processed/nba_new_joiner_impact_model_metrics.csv`
+    - `data/processed/nba_new_joiner_impact_predictions_draft_2025.csv`
+    - `data/processed/nba_new_joiner_impact_holdout_actual_vs_predicted_2022.csv`
+    - `data/processed/nba_new_joiner_impact_model_report.txt`
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+    - `data/processed/viz/nba_impact_dashboard1_real_top60_2022.html`
+- Updated visualization index cache revisions so browser loads latest pages:
+  - `data/processed/viz/index.html` (`rev=20260302d` for draft dashboard1 + both impact dashboards)
+- Renamed NBA impact page labels to NBA success naming in UI:
+  - `scripts/generate_nba_impact_actual_vs_pred_dashboard.py`
+  - `scripts/generate_nba_impact_dashboard1_top60_html.py`
+  - `data/processed/viz/index.html`
+  - regenerated:
+    - `data/processed/viz/nba_impact_dashboard_real_vs_predicted_2022.html`
+    - `data/processed/viz/nba_impact_dashboard1_real_top60_2022.html`
+- Reorganized dashboard landing page for clearer workflow:
+  - `data/processed/viz/index.html` now has `Core Dashboards` with only:
+    - `Draft Pick Dashboard`
+    - `NBA Success Dashboard`
+  - moved all remaining pages under `Experimental`, including:
+    - alternate top-60 success view
+    - 2026 draft predictor
+    - RAPM variant screens with season/population selectors
+- Fixed draft-name normalization mismatch for mixed-script characters by transliterating Cyrillic letters (including `ё`) during key generation in:
+  - `scripts/build_draft_training_table.py`
+  - `scripts/train_nba_draft_predictors.py`
+  - resolves missed joins such as `Egor Dёmin` vs `Egor Demin`.
+- Updated draft training labels and reran draft model outputs:
+  - refreshed `data/processed/nba_draft_holdout_2025_actual_top60_with_model_coverage.csv`
+  - refreshed `data/processed/nba_draft_predictions_season_2026.csv`
+  - refreshed `data/processed/nba_draft_model_report.txt`
+- `scripts/train_nba_draft_predictors.py` now writes holdout coverage export directly, so dashboard1 input stays aligned with the latest model run.
+- Regenerated draft dashboard1 and bumped index cache token:
+  - `data/processed/viz/nba_draft_dashboard1_real_vs_predicted_2025.html`
+  - `data/processed/viz/index.html` (`rev=20260302c` for draft dashboard1 card)
+- Fixed row-duplication bug in early target merge path for the new impact model by switching metric merges to a stable per-row key (`row_id`) instead of season/name merges.
+- Expanded impact-target family with free Basketball-Reference metrics (`BPM`, `WS/48`) and retrained the model.
+- Holdout evaluation for draft-year `2022` after BRef target expansion:
+  - `ridge`: `RMSE=0.6631`, `MAE=0.5348`, `Spearman=0.6162` (selected final model)
+  - `hist_gbrt`: `RMSE=0.6939`, `MAE=0.5514`, `Spearman=0.5438`
+  - `random_forest`: `RMSE=0.7055`, `MAE=0.5790`, `Spearman=0.5529`
+- Added holdout rank diagnostics for selected model:
+  - `MAE_rank=8.07`, `within5=21/44`, `within10=31/44`
+
+## 2026-03-01
+
+### Changed
+- Tightened external draft-feature joins in `scripts/build_draft_training_table.py` to reduce false player matches:
+  - exact season-name matches are now rejected when school/team keys conflict
+  - name-based backfill is now disabled by default (`--external-backfill-max-gap 0`)
+  - backfill path remains available as an opt-in CLI option
+- Rebuilt draft training table with stricter external matching:
+  - external matches now: `exact=736`, `backfill=0`, `none=54,554`
+  - output refreshed: `data/processed/nba_draft_training_table.csv`
+- Retrained draft hurdle model on refreshed table:
+  - output refreshed:
+    - `data/processed/nba_draft_model_report.txt`
+    - `data/processed/nba_draft_predictions_season_2026.csv`
+  - holdout (`test-year=2025`) now:
+    - ROC-AUC: `0.9716`
+    - PR-AUC: `0.3619`
+    - Brier: `0.0396`
+    - MAE: `10.976`
+    - RMSE: `13.265`
+    - top-60 capture (probability): `19/45`
+    - top-60 capture (expected-pick board): `24/45`
+- Regenerated draft dashboard from updated model outputs:
+  - `data/processed/viz/nba_draft_predictor_season_2026.html`
+  - `data/processed/viz/index.html` cache revision updated so browser loads the latest draft page.
+- Added clean-board post-processing for 2026 draft predictions:
+  - new script: `scripts/filter_draft_predictions.py`
+  - supports deterministic filtering using local stat-only fields (`conference`, `minutes`, `years_since_first_seen`)
+  - latest run wrote:
+    - `data/processed/nba_draft_predictions_season_2026_clean_board.csv`
+    - `data/processed/nba_draft_predictions_season_2026_clean_board_top30.csv`
+  - run config:
+    - `minutes >= 300`
+    - `years_since_first_seen <= 4`
+    - require non-empty conference
+- Added a new draft diagnostics dashboard page for real vs predicted picks:
+  - generator script: `scripts/generate_draft_actual_vs_predicted_dashboard1_html.py`
+  - output page: `data/processed/viz/nba_draft_dashboard1_real_vs_predicted_2025.html`
+  - input source: `data/processed/nba_draft_holdout_2025_actual_top60_with_model_coverage.csv`
+  - wired into viz index as:
+    - `Draft Dashboard 1: Real vs Predicted (2025)`
+- Updated Draft Dashboard 1 visualization semantics:
+  - success definition shown on page: covered real top-60 pick with `pred_rank_expected_pick <= 60`
+  - table rows now use distinct background colors for successful vs unsuccessful outcomes
+  - missing-data rows are visually separated and excluded from success totals
+  - added top summary banner with successful prediction count and rate for current filters
+- Added per-miss explanation text in Draft Dashboard 1:
+  - new `Miss Reason` column explains why each row is unsuccessful (or missing) using local model signals
+  - explanations are generated in-page from row data (for example, low minutes, low draft probability, late conditional pick projection)
+  - same explanation text is shown in scatter hover tooltips
+  - wording is now plain English with concrete player-by-player numbers instead of generic phrasing
+  - table now shows a short miss-only tag (for example `Low play time: 198m`), and leaves the tag blank for successful or missing-data rows
+  - replaced non-causal fallback tags with concrete miss causes (for example `Crowded board: expected #44.0 ranks #77`)
+- Added miss root-cause audit pipeline:
+  - new script: `scripts/compute_draft_miss_root_causes.py`
+  - output: `data/processed/nba_draft_holdout_2025_miss_root_causes.csv`
+  - computes a player-specific primary miss driver from model-feature contribution signs for each covered miss
+  - dashboard generator now auto-merges this output so `Miss Tag` reflects audited causes instead of generic cutline labels
+- Tightened miss-tag semantics further to avoid outcome-only labels:
+  - removed generic probability/rank-only tags as primary explanations
+  - miss tags now prioritize concrete driver features (for example low minutes, low usage, turnover/rebound profile, older prospect profile)
+- Added downloader for free NBA RAPM ecosystem datasets:
+  - script: `scripts/download_nbarapm_datasets.py`
+  - source: `https://www.nbarapm.com/load/{endpoint}`
+  - downloaded endpoints to `data/raw/external/nbarapm/`:
+    - `TimedecayRAPM` (`505` rows)
+    - `current_comp` (`524` rows)
+    - `player_stats_export` (`2,500` rows)
+    - `mamba` (`4,853` rows)
+    - `DARKO` (`15,035` rows)
+    - `lebron` (`8,622` rows)
+    - `raptor` (`12,500` rows)
+  - manifest written: `data/raw/external/nbarapm/manifest.csv`
+- Added processed helper outputs for NBA-success modeling bootstrap:
+  - `data/processed/nba_rapm_target_current_timedecay.csv`
+    - current timedecay RAPM target proxy from `TimedecayRAPM`
+  - `data/processed/nba_player_stats_export_2026.csv`
+    - 2026-only subset from `player_stats_export`
+- Added targeted investigation workflow for real top-60 picks missed by the board (`predicted rank > 60`):
+  - new script: `scripts/analyze_top60_miss_recovery.py`
+  - generated diagnostics:
+    - `data/processed/draft_rank_formula_sweep_2025.csv`
+    - `data/processed/draft_model_hyperparam_sweep_2025.csv`
+    - `data/processed/draft_posthoc_rerank_boost_sweep_2025.csv`
+    - `data/processed/draft_holdout_2025_boosted_rerank_analysis.csv`
+    - `data/processed/draft_holdout_2025_boosted_rerank_summary.txt`
+  - key finding on `2025` holdout:
+    - baseline top-60 captured: `24/45` covered drafted players
+    - formula-only and hyperparameter sweeps did not exceed `24`
+    - a pure-stats post-hoc rerank lifted capture to `26/45` (trade-off: one lottery drop)
+- Expanded draft model feature set to improve predictability from pure stats:
+  - `scripts/train_nba_draft_predictors.py` now adds:
+    - season-percentile engineered features (production/efficiency context)
+    - missingness indicators for key bios/external inputs
+    - team-season context features merged from `data/raw/cbbd/games/season=*/games.csv`:
+      - `team_win_pct`, `team_avg_margin`, `team_avg_elo_start`, `team_avg_opp_elo_start`, `team_avg_elo_delta`, `team_conference_game_rate`
+  - retrained outputs refreshed:
+    - `data/processed/nba_draft_model_report.txt`
+    - `data/processed/nba_draft_predictions_season_2026.csv`
+    - `data/processed/viz/nba_draft_predictor_season_2026.html`
+  - latest holdout (`test-year=2025`) after this feature pass:
+    - ROC-AUC: `0.9768`
+    - PR-AUC: `0.3595`
+    - Brier: `0.0340`
+    - MAE: `10.369`
+    - RMSE: `12.849`
+    - top-60 captured by predicted probs: `20/45`
+    - top-60 captured by expected-pick board: `22/45`
+
+## 2026-02-28
+
+### Added
+- Downloaded additional free external datasets for draft prediction feature engineering:
+  - RealGM-based model tables:
+    - `data/raw/external/nba_draft_model/draft_db.csv`
+    - `data/raw/external/nba_draft_model/model_db.csv`
+    - `data/raw/external/nba_draft_model/draft_db_nba.csv`
+  - NBA combine/draft historical archive bundle (S3 public files):
+    - `data/raw/external/nba_stats_draft/history`
+    - `data/raw/external/nba_stats_draft/antro`
+    - `data/raw/external/nba_stats_draft/strengthagility`
+    - `data/raw/external/nba_stats_draft/spotup`
+    - `data/raw/external/nba_stats_draft/nonstationary`
+- Added `scripts/generate_draft_predictor_html.py`:
+  - builds a standalone HTML dashboard for draft predictions from:
+    - `data/processed/nba_draft_predictions_season_2026.csv`
+    - `data/processed/nba_draft_model_report.txt`
+  - dashboard includes:
+    - holdout summary metrics
+    - top-10 prospect summary
+    - interactive filters (search, conference, position, min draft probability)
+    - scatter plot (`p_drafted` vs `expected_pick`) and sortable top table
+- Added `scripts/build_draft_training_table.py`:
+  - builds one row per athlete-season from CBBD player stats for draft modeling
+  - aggregates transfer seasons by athlete with summed counts + minute-weighted rates
+  - merges ESPN bio features (height/weight/age) when available
+  - joins NBA draft labels by normalized player name and season/year alignment
+  - writes `data/processed/nba_draft_training_table.csv`
+- Added `scripts/train_nba_draft_predictors.py`:
+  - implements a pure numpy/pandas 2-stage hurdle model:
+    - weighted logistic model for `drafted`
+    - ridge regression for `pick_number` on drafted players
+  - supports time-based holdout evaluation by draft year
+  - writes:
+    - `data/processed/nba_draft_model_report.txt`
+    - `data/processed/nba_draft_predictions_season_{SEASON}.csv`
+- Added `scripts/download_nba_draft_history.py`:
+  - downloads historical NBA draft outcomes from Basketball-Reference by year
+  - parses picks without requiring optional HTML dependencies (`lxml`)
+  - writes labels table for supervised modeling:
+    - `data/raw/nba/draft/nba_draft_history_2015_2025.csv`
+  - output includes `draft_year`, `pick_overall`, `pick_round`, `team_abbr`, `player_name`, `college_name`, `player_bref_id`
+- Expanded visualization stat coverage in `scripts/generate_athlete_viz_html.py`:
+  - enriches RAPM model rows from `data/raw/cbbd/players/season={SEASON}/player_season_stats.csv`
+  - auto-infers season from input filename (or accepts explicit `--season`)
+  - adds comprehensive player context fields (totals, per-40 rates, shooting %, usage, ratings, PORPAG, win shares) to HTML data payload
+- Added robust player-stat enrichment guards:
+  - tolerates missing columns in player-season source files
+  - computes only metrics supported by available columns
+- Added free bio downloader script `scripts/download_espn_player_bios.py`:
+  - uses ESPN public athlete endpoint keyed by CBBD `athlete_source_id`
+  - downloads height/weight, DOB, birthplace, position, and name fields
+  - supports resumable runs via `--skip-existing`
+  - writes to `data/raw/espn/player_bios/season={SEASON}/player_bios.csv`
+
+### Changed
+- Improved the NBA draft hurdle model using newly downloaded external data + stronger training setup:
+  - `scripts/build_draft_training_table.py`:
+    - adds player lifecycle features (`first_seen_season`, `years_since_first_seen`, first-year/upperclass flags)
+    - merges external features from `data/raw/external/nba_draft_model/model_db.csv`
+    - supports exact season-name matches plus name-based historical backfill
+  - `scripts/train_nba_draft_predictors.py`:
+    - adds engineered features (log volume stats, age/tier flags, assist/turnover, size proxy)
+    - adds recency sample weighting
+    - adds classifier negative downsampling (`--neg-pos-ratio`)
+    - adds draft-board capture metric for top-60 by expected-pick board
+  - latest holdout (`test-year=2025`) improved to:
+    - ROC-AUC: `0.9708` (from `0.9609`)
+    - PR-AUC: `0.3506` (from `0.2785`)
+    - Brier: `0.0354` (from `0.1095`)
+    - MAE: `10.624` (from `14.607`)
+    - RMSE: `12.926` (from `16.865`)
+    - top-60 captured by predicted probs: `19/45` (from `15/45`)
+    - top-60 captured by expected-pick board: `24/45` (new metric)
+- Refreshed draft dashboard with upgraded model outputs:
+  - regenerated `data/processed/viz/nba_draft_predictor_season_2026.html`
+  - bumped index link cache revision for the draft dashboard card
+- Updated `data/processed/viz/index.html` to include a direct `Draft Model` card linking to:
+  - `nba_draft_predictor_season_2026.html`
+- Enhanced draft dashboard narrative content:
+  - `nba_draft_predictor_season_2026.html` now includes a free-text `Executive Summary` block explaining:
+    - what the 2-stage model does
+    - how well it performed on holdout metrics
+    - how to interpret rankings and limitations
+- Rewrote draft dashboard summary for non-technical readability:
+  - replaced terse metric-jargon summary with plain-language narrative
+  - clarified practical usage (`use it for` vs `do not use it as`)
+  - renamed metric card labels to be more recognizable for non-statisticians
+- Reclaimed local disk space to unblock new downloads/model artifacts:
+  - removed local `.venv` folder (recreatable environment)
+- Reduced storage footprint for downloaded CBBD plays:
+  - compressed all local play files from `plays.csv` to `plays.csv.gz` for seasons currently stored
+  - reduced `data/raw/cbbd/plays` footprint from ~`4.4G` to ~`198M`
+- Updated data pipeline compatibility for compressed play files:
+  - `scripts/compute_rapm_from_plays.py` now loads `plays.csv.gz` (and still supports `plays.csv`)
+  - `scripts/update_cbbd.py --skip-existing` now treats compressed files as already-downloaded data
+- Expanded visualization choices from 5 to 7 dashboards:
+  - `v6_reliability_frontier` (composite reliability score blending focus metric, possessions, and cross-model agreement)
+  - `v7_consensus_range` (per-player model-rank range strips with mean/focus markers)
+- Updated `data/processed/viz/index.html` with two new dashboard links:
+  - `Reliability Frontier`
+  - `Consensus Range`
+- Updated visualization UI content to surface more player context:
+  - `v1_evidence_cards`: expanded "Box Score Context" panel to include broad totals/rates/efficiency stats
+  - `v3_head_to_head`: compare table now supports non-ranked box metrics with safe formatting and `n/a` handling
+- Moved dashboard generator implementation under `src/dashboard/generate_athlete_viz_html.py`:
+  - retained `scripts/generate_athlete_viz_html.py` as a thin compatibility wrapper entrypoint
+- Added ESPN bio context to dashboard views:
+  - `v1_evidence_cards`: now shows position, height, weight, age, DOB, birthplace, jersey in player detail panel when available
+  - `v2_archetype_map`: hover tooltip now appends available bio bits (height/weight/position)
+  - `v3_head_to_head`: summary now includes A/B player bio lines
+  - source file used: `data/raw/espn/player_bios/season=YYYY/player_bios.csv`
+- Added a persistent "Back to Index" navigation button on all generated dashboard pages (`v1`..`v5`) so each page can return to `data/processed/viz/index.html`.
+- Updated `data/processed/viz/index.html` navigation model:
+  - season + population selectors now drive dashboard link targets
+  - selected values are appended to dashboard URLs as query params (`?season=...&group=...`)
+  - dashboard card names now use plain titles (removed `V1`/`V2`/etc prefixes)
+- Updated dashboard page headings/titles to remove the word "Version" in favor of direct names:
+  - `Evidence Cards`, `Archetype Map`, `Head-to-Head Lab`, `Group Explorer`, `Model Agreement Matrix`
+- Updated Dashboard 1 (`Evidence Cards`) detail layout to use tabs:
+  - `Stat Measures` tab for RAPM evidence and drivers
+  - `Bio` tab for player bio fields
+  - `Box Score Context` tab for season stat context
+- Added dashboard link cache-busting query suffix (`rev`) in `data/processed/viz/index.html` so browser reloads fresh HTML after updates.
+- Refreshed generated dashboards after enrichment for:
+  - `data/processed/rapm_variants_season_2025.csv`
+  - `data/processed/rapm_variants_season_2025_freshmen.csv`
+- Downloaded 2025 ESPN player bios (free source):
+  - candidates: `9,788`
+  - output rows: `9,788`
+  - success: `9,766`
+  - non-ok: `22` (mostly ESPN `404` IDs)
+  - output: `data/raw/espn/player_bios/season=2025/player_bios.csv`
+
+## 2026-02-27
+
+### Added
+- Added `--skip-existing` option to `scripts/update_cbbd.py` for play downloads.
+- Added helper path logic in `scripts/update_cbbd.py` to skip teams with existing non-empty `plays.csv`.
+- Added skip-existing support for lineup downloads in `scripts/update_cbbd.py`:
+  - `--lineups` now skips existing non-empty lineup file when requested
+  - `--lineups-all` now skips already-downloaded teams when `--skip-existing` is set
+- Added `scripts/compute_epm_lite_from_plays.py`:
+  - computes RAPM from plays using current shared RAPM pipeline
+  - builds a box-score prior from player season stats
+  - blends RAPM with box prior by possession reliability to produce `epm_lite`
+  - supports existing D1 tier filters (`--team-tier`, `--tier-filter-mode`)
+  - writes enriched leaderboard with `epm_lite`, `rapm`, `box_prior`, and blend weights
+- Added `scripts/compute_rapm_variants.py` to run multiple pure-stat RAPM techniques in one workflow:
+  - ridge RAPM with fixed lambda (`rapm_ridge`)
+  - game-level CV-selected lambda RAPM (`rapm_cv`)
+  - robust Huber RAPM via IRLS (`rapm_huber`)
+  - Bayesian RAPM with stat-only box prior mean (`rapm_bayes_box`)
+  - close-game RAPM (garbage-time filtered by start margin) (`rapm_close`)
+  - home-court-adjusted RAPM with explicit home-court term (`rapm_hca`)
+  - offense/defense RAPM decomposition (`orapm`, `drapm`, `rapm_od_net`)
+  - empirical-Bayes possessions shrink (`rapm_eb`)
+  - writes consolidated variant table + per-variant top-N CSVs + run summary txt
+- Added D1 conference-tier filtering to RAPM:
+  - new CLI args in `scripts/compute_rapm_from_plays.py`:
+    - `--team-tier` (`all`, `high`, `mid`, `high_mid`)
+    - `--tier-filter-mode` (`both`, `team`)
+  - supports filtering by high/mid-major conferences before model fit.
+- Added memory-control options to RAPM CLI:
+  - `--max-players` (default `3000`)
+  - `--max-files` for smoke tests
+- Added laptop-safe RAPM aggregation strategy in `scripts/compute_rapm_from_plays.py` (aggregate by unique lineup stint before solve).
+- Added `docs/CHANGELOG.md` and `docs/PROJECT_STATUS.md`.
+
+### Changed
+- Updated `scripts/pull_cbbd_plays_2025_2026_allteams.sh` to use `--skip-existing` by default.
+- Updated `notebooks/rapm.ipynb` to call shared RAPM logic from `scripts/compute_rapm_from_plays.py` instead of duplicating heavy notebook logic.
+- Improved lineup parser robustness in `scripts/compute_rapm_from_plays.py`:
+  - prefer parsing `id`/`name` from lineup dicts
+  - try JSON and Python-literal parsing paths before fallback
+  - avoid malformed pseudo-player IDs from comma splitting of dict strings
+- Upgraded RAPM possession handling in `scripts/compute_rapm_from_plays.py`:
+  - when official possession columns are missing, estimate possessions per stint from play events using:
+    - `FGA - ORB + TO + 0.44 * FTA` (averaged across home/away)
+  - close stints using previous-row scoreboard state when lineup changes
+  - retain official possession-delta logic if possession columns exist
+- Added player metadata enrichment in RAPM output:
+  - joins `athlete_id -> name/team` from `data/raw/cbbd/players/season=YYYY/player_season_stats.csv`
+  - output now includes `player_name` and `player_team`
+- Raised RAPM default `--min_possessions` from `50` to `200` for more stable leaderboard results.
+- Updated `notebooks/rapm.ipynb` defaults and plotting labels:
+  - default `MIN_POSSESSIONS = 200`
+  - plot uses `player_name` when available.
+- Optimized RAPM lineup construction performance:
+  - refactored `build_lineups_from_on_floor()` to use cached `on_floor` parsing
+  - switched from `iterrows()` to `itertuples()` in lineup mapping path
+  - improves laptop runtime for larger season runs.
+
+### Data Refresh Runs
+- Confirmed season `2025` plays coverage complete:
+  - API teams: `364`
+  - local non-empty team files: `364`
+  - missing: `0`
+- Started season `2026` plays refresh with skip-existing behavior.
+  - Current local non-empty team files: `8`
+  - Remaining missing vs API list at snapshot time: `357`
+- Verified season `2025` lineup endpoint files are partial:
+  - local non-empty lineup files: `7`
+  - API teams: `364`
+  - note: RAPM pipeline uses `plays/*/on_floor`, so this does not block RAPM computation.
+- Completed full season `2025` RAPM run with D1 high+mid-major filter:
+  - config: `--team-tier high_mid --tier-filter-mode both`
+  - kept plays after filter: `847,152 / 2,185,049`
+  - aggregated stints: `73,922`
+  - output: `data/processed/rapm_top100_season_2025_high_mid_both.csv`
+- Completed full season `2025` EPM-lite run (unfiltered):
+  - loaded deduped plays: `2,185,049`
+  - capped RAPM pool: `3,000` players (from `3,805`)
+  - aggregated unique stints: `184,125`
+  - output: `data/processed/epm_lite_topall_season_2025.csv`
+- Completed quick season `2026` EPM-lite snapshot (partial ingest):
+  - loaded deduped plays: `101,105` (from `8` teams currently downloaded)
+  - aggregated unique stints: `7,478`
+  - players meeting min possessions: `79`
+  - output: `data/processed/epm_lite_top20_season_2026.csv`
+- Completed full season `2025` multi-technique RAPM variants run (unfiltered):
+  - loaded deduped plays: `2,185,049`
+  - built stints: `185,798`
+  - capped player pool: `2,500` (from `3,805`)
+  - regression rows: `185,342`
+  - CV-selected lambda: `200`
+  - close-game rows (`|start margin| <= 20`): `170,480`
+  - estimated home-court term: `6.1649` points per 100
+  - outputs:
+    - `data/processed/rapm_variants_season_2025.csv`
+    - `data/processed/rapm_variants_summary_season_2025.txt`
+- Re-ran full season `2025` all-formula RAPM variants in one pass with `--top-n 100` to refresh per-variant leaderboards together from a single run.
+- Added data-quality check for Cooper Flagg coverage in 2025 Duke plays:
+  - Duke plays file contains `39` unique Duke game IDs with non-null `on_floor` in all games.
+  - Flagg (`athlete_id=205`) appears in `on_floor` for `37` of those games.
+  - Player season stats also list Flagg with `games=37`, indicating missing-rank concern is not due to missing Flagg play coverage.
+  - Two Duke games without Flagg in `on_floor`: game IDs `209024` (vs North Carolina) and `209137` (vs Louisville), consistent with DNP-style absence rather than missing team download.
+- Re-ran full season `2025` RAPM variants with lambda forced to `1000`:
+  - command used `--ridge 1000 --ridge-grid 1000`
+  - fixed and CV lambdas both set to `1000`
+  - refreshed `data/processed/rapm_variants_season_2025.csv` and summary output
+  - under this run, Flagg ranks improved in several variants (e.g., `rapm_cv=40`, `rapm_hca=45`, `rapm_bayes_box=18`, `rapm_close=4`)
+- Re-ran full season `2025` RAPM variants with lambda forced to `4000`:
+  - command used `--ridge 4000 --ridge-grid 4000 --top-n 30`
+  - fixed and CV lambdas both set to `4000`
+  - refreshed variant outputs and per-metric top-30 files
+  - example outcome: in `rapm_hca`, Flagg moved to rank `6`
+- Added freshmen-only output filter to `scripts/compute_rapm_variants.py`:
+  - new CLI option `--player-filter` with `all` (default) and `freshmen`
+  - freshman detection uses historical local `player_season_stats` files and flags players whose first seen active season equals target season
+  - writes separate suffixed outputs when filtered (e.g., `_freshmen`)
+- Completed full season `2025` freshmen-only variants run with lambda `4000`:
+  - command used `--ridge 4000 --ridge-grid 4000 --player-filter freshmen --top-n 30`
+  - inferred freshmen candidates from history: `4,814`
+  - filtered model output players: `440 / 2,500`
+  - output files:
+    - `data/processed/rapm_variants_season_2025_freshmen.csv`
+    - `data/processed/rapm_variants_summary_season_2025_freshmen.txt`
+- Added resumable season `2026` full-refresh helper script:
+  - `scripts/pull_cbbd_2026_resume_all.sh`
+  - runs `games/players`, then `plays-all --skip-existing`, then `lineups-all --skip-existing`
+- Ran season `2026` refresh and hit provider quota limit:
+  - refreshed season files:
+    - `data/raw/cbbd/games/season=2026/games.csv`
+    - `data/raw/cbbd/players/season=2026/player_season_stats.csv`
+  - plays coverage increased from `8` to `72` non-empty team files before quota exhaustion
+  - API started returning `429` with message: `"Monthly call quota exceeded."`
+  - lineups refresh for 2026 is currently blocked by the same quota error
+- Added HTML visualization generator:
+  - `scripts/generate_athlete_viz_html.py`
+  - generates three standalone dashboard variants from a model CSV:
+    - `v1_evidence_cards` (ranked table + player evidence panel)
+    - `v2_archetype_map` (offense-vs-defense bubble map)
+    - `v3_head_to_head` (two-player comparison lab)
+- Generated visualization HTML outputs for:
+  - `data/processed/rapm_variants_season_2025_freshmen.csv`
+  - `data/processed/rapm_variants_season_2025.csv`
+  - output directory: `data/processed/viz/`
+- Added styled visualization landing page:
+  - `data/processed/viz/index.html`
+  - groups dashboard links by `Freshmen` and `All Players`
+  - replaces plain directory listing with a readable local homepage
+- Expanded visualization choices from 3 to 5 dashboard variants:
+  - `v4_group_explorer` (conference/team weighted score explorer)
+  - `v5_agreement_matrix` (cross-model rank consistency table)
+  - generated for both full 2025 and 2025 freshmen datasets
+  - updated `data/processed/viz/index.html` to link all 10 dashboards
+
+### RAPM Review Notes
+- Current implementation is a ridge plus/minus approximation with event-based possession estimation when official possession counters are unavailable.
+- This is a meaningful improvement over stint=`1 possession` proxy, but still not fully equivalent to a possession-by-possession RAPM with authoritative possession IDs.
